@@ -187,6 +187,19 @@ control 'cis-dil-benchmark-1.1.5' do
   end
 end
 
+control 'cis-ubuntu-2004-benchmark-1.1.6' do
+  title 'Ensure /dev/shm is configured'
+  desc  "/dev/shm is a traditional shared memory concept. One program will create a memory portion, which other processes (if permitted) can access. Mounting tmpfs at /dev/shm is handled automatically by systemd.\n\nRationale: Any user can upload and execute files inside the /dev/shm similar to the /tmp partition. Configuring /dev/shm allows an administrator to set the noexec option on the mount, making /dev/shm useless for an attacker to install executable code. It would also prevent an attacker from establishing a hardlink to a system setuid program and wait for it to be updated. Once the program was updated, the hardlink would be broken and the attacker would have his own copy of the program. If the program happened to have a security vulnerability, the attacker could continue to exploit the known flaw."
+  impact 1.0
+
+  tag cis: 'ubuntu-2004-linux:1.1.6'
+  tag level: 1
+
+  describe mount('/dev/shm') do
+    it { should be_mounted }
+  end
+end
+
 control 'cis-dil-benchmark-1.1.6' do
   title 'Ensure separate partition exists for /var'
   desc  "The /var directory is used by daemons and other system services to temporarily store dynamic data. Some directories created by these processes may be world-writable.\n\nRationale: Since the /var directory may contain world-writable files and directories, there is a risk of resource exhaustion if it is not bound to a separate partition."

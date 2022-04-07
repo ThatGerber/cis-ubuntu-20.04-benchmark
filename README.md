@@ -1,7 +1,7 @@
-# CIS Distribution Independent Linux Benchmark - InSpec Profile
+# CIS Ubuntu 20.04 Linux Benchmark - InSpec Profile
 
 ## Description
-This profile implements the [CIS Distribution Independent Linux 2.0.0 Benchmark](https://www.cisecurity.org/benchmark/distribution_independent_linux/).
+This profile implements the [CIS Ubuntu 20.04 1.1.0 Benchmark](https://www.cisecurity.org/benchmark/ubuntu_linux).
 
 ## Attributes
 
@@ -12,7 +12,9 @@ To switch between the CIS profile levels the following attribute can be used:
 
 ## License and Author
 
-* Author:: Kristian Vlaardingerbroek <kvlaardingerbroek@schubergphilis.com>
+* Author:: Chris W. Gerber
+
+Fork of [github.com/dev-sec/cis-dil-benchmark](https://github.com/dev-sec/cis-dil-benchmark)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

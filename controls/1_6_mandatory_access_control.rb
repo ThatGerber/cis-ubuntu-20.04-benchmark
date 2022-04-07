@@ -19,6 +19,8 @@
 
 cis_level = input('cis_level')
 
+linux_family = input('linux_family', default: 'ubuntu')
+
 title '1.6 Mandatory Access Control'
 
 control 'cis-dil-benchmark-1.6.1.1' do
@@ -40,6 +42,21 @@ control 'cis-dil-benchmark-1.6.1.1' do
   only_if { cis_level == 2 }
 end
 
+control 'cis-ubuntu-2004-benchmark-1.6.1.1' do
+  title 'Ensure AppArmor is installed'
+  desc  "AppArmor provides Mandatory Access Controls.\n\nRationale: Without a Mandatory Access Control system installed only the default Discretionary Access Control system will be available."
+  impact 1.0
+
+  tag cis: 'ubuntu-2004-linux:1.6.1.1'
+  tag level: 2
+
+  describe package('apparmor') do
+    it { should be_installed }
+  end
+
+  only_if { cis_level == 2 and linux_family == 'ubuntu' }
+end
+
 control 'cis-dil-benchmark-1.6.2.1' do
   title 'Ensure SELinux is not disabled in bootloader configuration'
   desc  "Configure SELINUX to be enabled at boot time and verify that it has not been overwritten by the grub boot parameters.\n\nRationale: SELinux must be enabled at boot time in your grub configuration to ensure that the controls it provides are not overridden."
@@ -57,7 +74,7 @@ control 'cis-dil-benchmark-1.6.2.1' do
     end
   end
 
-  only_if { cis_level == 2 }
+  only_if { cis_level == 2 and linux_family != 'ubuntu' }
 end
 
 control 'cis-dil-benchmark-1.6.2.2' do
@@ -78,7 +95,7 @@ control 'cis-dil-benchmark-1.6.2.2' do
     its('stdout') { should match /Mode from config file:\s+enforcing/ }
   end
 
-  only_if { cis_level == 2 }
+  only_if { cis_level == 2 and linux_family != 'ubuntu' }
 end
 
 control 'cis-dil-benchmark-1.6.2.3' do
@@ -97,7 +114,7 @@ control 'cis-dil-benchmark-1.6.2.3' do
     its('stdout') { should match /Policy from config file:\s+(targeted|mls)/ }
   end
 
-  only_if { cis_level == 2 }
+  only_if { cis_level == 2 and linux_family != 'ubuntu' }
 end
 
 control 'cis-dil-benchmark-1.6.2.4' do
@@ -116,7 +133,7 @@ control 'cis-dil-benchmark-1.6.2.4' do
     it { should_not exist }
   end
 
-  only_if { cis_level == 2 }
+  only_if { cis_level == 2 and linux_family != 'ubuntu' }
 end
 
 control 'cis-dil-benchmark-1.6.2.5' do
@@ -135,7 +152,7 @@ control 'cis-dil-benchmark-1.6.2.5' do
     it { should_not exist }
   end
 
-  only_if { cis_level == 2 }
+  only_if { cis_level == 2 and linux_family != 'ubuntu' }
 end
 
 control 'cis-dil-benchmark-1.6.2.6' do
@@ -150,7 +167,7 @@ control 'cis-dil-benchmark-1.6.2.6' do
     its('stdout') { should eq '' }
   end
 
-  only_if { cis_level == 2 }
+  only_if { cis_level == 2 and linux_family != 'ubuntu' }
 end
 
 control 'cis-dil-benchmark-1.6.3.1' do
@@ -181,6 +198,67 @@ control 'cis-dil-benchmark-1.6.3.2' do
   tag level: 2
 
   only_if { cis_level == 2 && package('apparmor').installed? }
+
+  describe command('apparmor_status --profiled') do
+    its('stdout') { should cmp > 0 }
+  end
+
+  describe command('apparmor_status --complaining') do
+    its('stdout') { should cmp 0 }
+  end
+
+  describe command('apparmor_status') do
+    its('stdout') { should match(/0 processes are unconfined/) }
+  end
+end
+
+control 'cis-ubuntu-2004-benchmark-1.6.1.2' do
+  title 'Ensure AppArmor is enabled in the bootloader configuration'
+  desc  "Configure AppArmor to be enabled at boot time and verify that it has not been overwritten by the bootloader boot parameters.\n\nNote: This recommendation is designed around the grub bootloader, if LILO or another bootloader is in use in your environment enact equivalent settings.\n\nRationale: AppArmor must be enabled at boot time in your bootloader configuration to ensure that the controls it provides are not overridden."
+  impact 1.0
+
+  tag cis: 'ubuntu-2004-linux:1.6.1.2'
+  tag level: 2
+
+  only_if { cis_level == 2 && linux_family != 'ubuntu' }
+
+  describe.one do
+    grub_conf.locations.each do |f|
+      describe file(f) do
+        its('content') { should_not match /apparmor=0/ }
+      end
+    end
+  end
+end
+
+
+aa_profiles_complain = command('apparmor_status --complaining').stdout
+aa_profiles_enforced = command('apparmor_status --enforced').stdout
+
+control 'cis-ubuntu-2004-benchmark-1.6.1.3' do
+  title 'Ensure all AppArmor Profiles are in enforce or complain mode'
+  desc  "AppArmor profiles define what resources applications are able to access.\n\nRationale: Security configuration requirements vary from site to site. Some sites may mandate a policy that is stricter than the default policy, which is perfectly acceptable. This item is intended to ensure that any policies that exist on the system are activated."
+  impact 1.0
+
+  tag cis: 'ubuntu-2004-linux:1.6.1.3'
+  tag level: 2
+
+  only_if { cis_level == 2 && linux_family != 'ubuntu' }
+
+  describe command('apparmor_status --profiled') do
+    its('stdout') { should cmp > 0 && cmp == (aa_profiles_enforced + aa_profiles_complain) }
+  end
+end
+
+control 'cis-ubuntu-2004-benchmark-1.6.1.4' do
+  title 'Ensure all AppArmor Profiles are enforcing'
+  desc  "AppArmor profiles define what resources applications are able to access.\n\nRationale: Security configuration requirements vary from site to site. Some sites may mandate a policy that is stricter than the default policy, which is perfectly acceptable. This item is intended to ensure that any policies that exist on the system are activated."
+  impact 1.0
+
+  tag cis: 'ubuntu-2004-linux:1.6.1.4'
+  tag level: 2
+
+  only_if { cis_level == 2 && linux_family != 'ubuntu' }
 
   describe command('apparmor_status --profiled') do
     its('stdout') { should cmp > 0 }

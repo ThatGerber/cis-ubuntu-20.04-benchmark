@@ -17,6 +17,8 @@
 #
 # author: Kristian Vlaardingerbroek
 
+# Rename to 2.1 in Ubuntu Benchmarks
+
 title '2.2 Special Purpose Services'
 
 control 'cis-dil-benchmark-2.2.1.1' do
